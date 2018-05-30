@@ -3,7 +3,7 @@ node {
     deleteDir()
 
     try {
-        stage ('SCM Check') {
+        stage ('Clone Source Code') {
              git branch: 'master', credentialsId: 'jenkins_ssh_key', url: 'git@github.com:venurachakonda/simple-java-maven-app.git'
              stash includes: '**', name: 'sampleApp'
         }
@@ -17,11 +17,6 @@ node {
 
          /* Requires the Docker Pipeline plugin to be installed */
         docker.image('maven:3-alpine').inside('-v $HOME/.m2:/root/.m2') {
-            stage('Build Maven package') {
-                sh 'mvn -B -DskipTests clean package'
-                stash includes: 'target/', name: 'target'
-            }
-
             stage ('Setup Build Directory') {
               node{
                 dir("build"){
@@ -30,14 +25,20 @@ node {
                 }
 
                 dir("build"){
-                  unstash 'target'
-                } 
+                  unstash 'sampleApp'
+                }             
               }
-            }          
+            }              
+            stage('Build Maven package') {
+                sh 'mvn -B -DskipTests clean package'
+                stash includes: 'target/', name: 'target'
+            }              
+          
     
             stage ('Build Docker Image') {
               node{
                 dir("build"){
+                  unstash 'target'	
                   container = docker.build('sampleApp', ".")
                 }
               }
