@@ -21,7 +21,7 @@ node {
             dir("build"){
               unstash 'dockerConfig'
               sh "mv docker/* ."
-          
+            }
             dir("build"){
               unstash 'sampleApp'
             }             
