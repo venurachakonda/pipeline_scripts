@@ -25,7 +25,7 @@ node {
 
         stage ('Setup Build Directory') {
           node{
-            dir("build"){
+            dir("test1"){
               unstash 'dockerConfig'
               sh "mv docker/* ."
             }
@@ -34,15 +34,14 @@ node {
 
         stage ('Build Docker Image') {
           node{
-            dir("build"){
-                  container = docker.build('sampleApp', ".")
-        
+            dir("test1"){
+              container = docker.build('sampleApp', ".")
             }
           }
         }
         stage ("Push Docker Image") {
           node{
-            dir("build"){
+            dir("test1"){
               docker.withRegistry('http://192.168.33.50', 'docker_registry') {
                 container.push("v${env.BUILD_NUMBER}")
                 container.push('latest')
