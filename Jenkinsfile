@@ -19,6 +19,7 @@ node {
         docker.image('maven:3-alpine').inside('-v $HOME/.m2:/root/.m2') {
             stage('Build Maven package') {
                 sh 'mvn -B -DskipTests clean package'
+                stash includes: 'target/', name: 'target'
             }
 
             stage ('Setup Build Directory') {
@@ -27,6 +28,10 @@ node {
                   unstash 'dockerConfig'
                   sh "mv docker/* ."
                 }
+
+                dir("build"){
+                  unstash 'target'
+                } 
               }
             }          
     
