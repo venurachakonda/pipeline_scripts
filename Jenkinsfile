@@ -15,24 +15,29 @@ node {
           }
         }
 
-         /* Requires the Docker Pipeline plugin to be installed */
-        docker.image('maven:3-alpine').inside('-v $HOME/.m2:/root/.m2') {
-            stage ('Setup Build Directory') {
-              node{
-                dir("build"){
-                  unstash 'dockerConfig'
-                  sh "mv docker/* ."
-                }
 
-                dir("build"){
-                  unstash 'sampleApp'
-                }             
-              }
-            }              
+        stage ('Setup Build Directory') {
+          node{
+            dir("build"){
+              unstash 'dockerConfig'
+              sh "mv docker/* ."
+          
+            dir("build"){
+              unstash 'sampleApp'
+            }             
+          }
+        }           
+
+         /* Requires the Docker Pipeline plugin to be installed */
+        docker.image('maven:3-alpine').inside('-v $HOME/.m2:/root/.m2') {               
             stage('Build Maven package') {
-                sh 'mvn -B -DskipTests clean package'
-                stash includes: 'target/', name: 'target'
-            }              
+            	node {
+            	  dir("build") {
+                    sh 'mvn -B -DskipTests clean package'
+                    stash includes: 'target/', name: 'target'              	  	
+            	  }
+            	}
+            }            
           
     
             stage ('Build Docker Image') {
