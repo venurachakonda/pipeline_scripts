@@ -27,7 +27,7 @@ node {
           node{
             dir("test1"){
               unstash 'dockerConfig'
-              sh "mv docker/* ."
+              sh "ls -ltra"
             }
           }
         }          
