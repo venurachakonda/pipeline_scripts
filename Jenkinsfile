@@ -21,37 +21,37 @@ node {
                 sh 'mvn -B -DskipTests clean package'
             }
 
-        }            
-
-        stage ('Setup Build Directory') {
-          node{
-            dir("test1"){
-              unstash 'dockerConfig'
-              sh "pwd"
-              sh "ls -lart"
-              sh "mv docker/* ."
-            }
-          }
-        }          
-
-        stage ('Build Docker Image') {
-          node{
-            dir("test1"){
-              container = docker.build('sampleApp', ".")
-            }
-          }
-        }
-        stage ("Push Docker Image") {
-          node{
-            dir("test1"){
-              docker.withRegistry('http://192.168.33.50', 'docker_registry') {
-                container.push("v${env.BUILD_NUMBER}")
-                container.push('latest')
+            stage ('Setup Build Directory') {
+              node{
+                dir("build"){
+                  unstash 'dockerConfig'
+                  sh "mv docker/* ."
+                }
+              }
+            }          
+    
+            stage ('Build Docker Image') {
+              node{
+                dir("build"){
+                  container = docker.build('sampleApp', ".")
+                }
               }
             }
-            milestone 1
-          }
-        }
+            stage ("Push Docker Image") {
+              node{
+                dir("build"){
+                  docker.withRegistry('http://192.168.33.50', 'docker_registry') {
+                    container.push("v${env.BUILD_NUMBER}")
+                    container.push('latest')
+                  }
+                }
+                milestone 1
+              }
+            }
+
+        }            
+
+
 
         stage ('Tests') {
             parallel 'static': {
