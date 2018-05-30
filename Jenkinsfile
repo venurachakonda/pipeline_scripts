@@ -11,7 +11,7 @@ node {
         stage ('Clone Docker Dependencies') {
           node{
             git branch: 'master', credentialsId: 'jenkins_ssh_key', url: 'git@github.com:venurachakonda/pipeline_scripts.git'
-            stash includes: 'docker/**', name: 'dockerConfig'
+            stash includes: '**', name: 'dockerConfig'
           }
         }
 
