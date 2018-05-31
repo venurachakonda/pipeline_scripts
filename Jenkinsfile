@@ -38,23 +38,25 @@ stage ('Setup Build Directory') {
 
 
 stage('Build jars') {
-  node('docker') {
+  node{
     echo 'Building jars ...'
-    def maven = docker.image('maven:3.5.3-jdk-8')
-    maven.pull()
-    maven.inside {
-      sh 'mvn clean package -DskipTests'
-      try {
-        sh 'mvn test'
+    dir("build/${params.APP_NAME}"){
+      def maven = docker.image('maven:3.5.3-jdk-8')
+      maven.pull()
+      maven.inside {
+        sh 'mvn clean package -DskipTests'
+        try {
+          sh 'mvn test'
+        }
+        finally {
+          echo "surefire-reports here"
+          //junit '**/target/surefire-reports/TEST-*.xml'
+        }
+        def artifacts = "${params.APP_NAME}/target/*.jar"
+        archiveArtifacts artifacts: artifacts, fingerprint: true, onlyIfSuccessful: true
+        stash includes: artifacts, name: 'jars'
       }
-      finally {
-        echo "surefire-reports here"
-        //junit '**/target/surefire-reports/TEST-*.xml'
-      }
-      def artifacts = "${params.APP_NAME}/target/*.jar"
-      archiveArtifacts artifacts: artifacts, fingerprint: true, onlyIfSuccessful: true
-      stash includes: artifacts, name: 'jars'
-    }
+    }    
   }
 }
 
