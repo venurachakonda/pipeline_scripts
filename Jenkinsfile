@@ -1,87 +1,77 @@
-node {
-    // Clean workspace before doing anything
-    deleteDir()
-
-    try {
-        stage ('Clone Source Code') {
-             git branch: 'master', credentialsId: 'jenkins_ssh_key', url: 'git@github.com:venurachakonda/simple-java-maven-app.git'
-             stash includes: '**', name: 'sampleApp'
-        }
-
-        stage ('Clone Docker Dependencies') {
-          node{
-            git branch: 'master', credentialsId: 'jenkins_ssh_key', url: 'git@github.com:venurachakonda/pipeline_scripts.git'
-            stash includes: '**', name: 'dockerConfig'
-          }
-        }
+properties([
+  buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '', numToKeepStr: '5')), 
+  parameters([
+    string(defaultValue: 'sampleApp', description: 'Application Name', name: 'APP_NAME', trim: true),
+    string(defaultValue: 'git@github.com:venurachakonda/simple-java-maven-app.git', description: 'Application Source URL', name: 'APP_SCM_URL', trim: true), 
+    string(defaultValue: 'git@github.com:venurachakonda/pipeline_scripts.git', description: 'Rackspace template files -  Docker dependencies', name: 'RPS_SCM_URL', trim: true)
+  ])
+])
 
 
-        stage ('Setup Build Directory') {
-          node{
-            dir("build"){
-              unstash 'dockerConfig'
-              sh "mv docker/* ."
-            }
-            dir("build"){
-              unstash 'sampleApp'
-            }             
-          }
-        }           
-
-         /* Requires the Docker Pipeline plugin to be installed */
-        docker.image('maven:3-alpine').inside('-v $HOME/.m2:/root/.m2') {               
-            stage('Build Maven package') {
-            	node {
-            	  dir("build") {
-                    sh 'mvn -B -DskipTests clean package'
-                    stash includes: 'target/', name: 'target'              	  	
-            	  }
-            	}
-            }            
-          
-    
-            stage ('Build Docker Image') {
-              node{
-                dir("build"){
-                  unstash 'target'	
-                  container = docker.build('sampleApp', ".")
-                }
-              }
-            }
-            stage ("Push Docker Image") {
-              node{
-                dir("build"){
-                  docker.withRegistry('http://192.168.33.50', 'docker_registry') {
-                    container.push("v${env.BUILD_NUMBER}")
-                    container.push('latest')
-                  }
-                }
-                milestone 1
-              }
-            }
-
-        }            
-
-
-
-        stage ('Tests') {
-            parallel 'static': {
-                sh "echo 'shell scripts to run static tests...'"
-            },
-            'unit': {
-                sh "echo 'shell scripts to run unit tests...'"
-            },
-            'integration': {
-                sh "echo 'shell scripts to run integration tests...'"
-            }
-        }
-        
-
-        /*stage ('Deploy') {
-            sh "echo 'shell scripts to deploy to server...'"
-        }*/
-    } catch (err) {
-        currentBuild.result = 'FAILED'
-        throw err
-    }
+stage ('Clone Application Code') {
+     git branch: 'master', credentialsId: 'jenkins_ssh_key', url: params.APP_SCM_URL
+     stash includes: '**', name: params.APP_NAME
 }
+
+stage ('Clone Docker Dependencies') {
+  node{
+    git branch: 'master', credentialsId: 'jenkins_ssh_key', url: params.RPS_SCM_URL
+    stash includes: '**', name: 'dockerConfig'
+  }
+}
+
+
+stage ('Setup Build Directory') {
+  node{
+    dir("build"){
+      unstash 'dockerConfig'
+      sh "mv docker/* ."
+    }
+    dir("build/${params.APP_NAME}"){
+      unstash params.APP_NAME
+    }             
+  }
+} 
+
+/*
+stage('Build jars') {
+  node('docker') {
+    echo 'Building jars ...'
+    def maven = docker.image('maven:3.5.3-jdk-8')
+    maven.pull()
+    maven.inside {
+      checkout scm
+      sh 'mvn clean package -DskipTests'
+      try {
+        sh 'mvn test'
+      }
+      finally {
+        junit '*/ /*/target/surefire-reports/TEST-*.xml'
+      }
+      def artifacts = 'devicehive-backend/target/devicehive-backend-*-boot.jar, devicehive-auth/target/devicehive-auth-*-boot.jar, devicehive-plugin/target/devicehive-plugin-*-boot.jar, devicehive-frontend/target/devicehive-frontend-*-boot.jar, devicehive-common/target/devicehive-common-*-shade.jar'
+      archiveArtifacts artifacts: artifacts, fingerprint: true, onlyIfSuccessful: true
+      stash includes: artifacts, name: 'jars'
+    }
+  }
+}
+
+stage('Build and publish Docker images in CI repository') {
+  node('docker') {
+    echo 'Building images ...'
+    unstash 'jars'
+    def auth = docker.build('devicehiveci/devicehive-auth:${BRANCH_NAME}', '--pull -f dockerfiles/devicehive-auth.Dockerfile .')
+    def plugin = docker.build('devicehiveci/devicehive-plugin:${BRANCH_NAME}', '-f dockerfiles/devicehive-plugin.Dockerfile .')
+    def frontend = docker.build('devicehiveci/devicehive-frontend:${BRANCH_NAME}', '-f dockerfiles/devicehive-frontend.Dockerfile .')
+    def backend = docker.build('devicehiveci/devicehive-backend:${BRANCH_NAME}', '-f dockerfiles/devicehive-backend.Dockerfile .')
+    def hazelcast = docker.build('devicehiveci/devicehive-hazelcast:${BRANCH_NAME}', '--pull -f dockerfiles/devicehive-hazelcast.Dockerfile .')
+
+    echo 'Pushing images to CI repository ...'
+    docker.withRegistry('https://registry.hub.docker.com', 'devicehiveci_dockerhub'){
+      auth.push()
+      plugin.push()
+      frontend.push()
+      backend.push()
+      hazelcast.push()
+    }
+  }
+}*/
