@@ -1,3 +1,4 @@
+#!groovy
 properties([
   buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '', numToKeepStr: '5')), 
   parameters([
@@ -14,7 +15,6 @@ stages {
        git branch: 'master', credentialsId: 'jenkins_ssh_key', url: params.APP_SCM_URL
        stash includes: '**', name: params.APP_NAME    
     }
-  
   }
   
   stage ('Clone Docker Dependencies') {
@@ -35,7 +35,7 @@ stages {
         unstash params.APP_NAME
       }             
     }
-  }   
+  }  
 }
 
 
@@ -83,8 +83,8 @@ stages {
         docker.withRegistry("http://${params.DOCKER_REGISTRY}", 'docker_registry'){
           appImage.push("v${env.BUILD_NUMBER}")
           appImage.push("latest")        
-      }
+        }
+      }  
     }
   } 
 }
-
