@@ -36,28 +36,29 @@ stage ('Setup Build Directory') {
   }
 } 
 
-/*
+
 stage('Build jars') {
   node('docker') {
     echo 'Building jars ...'
     def maven = docker.image('maven:3.5.3-jdk-8')
     maven.pull()
     maven.inside {
-      checkout scm
       sh 'mvn clean package -DskipTests'
       try {
         sh 'mvn test'
       }
       finally {
-        junit '*/ /*/target/surefire-reports/TEST-*.xml'
+        echo "surefire-reports here"
+        //junit '**/target/surefire-reports/TEST-*.xml'
       }
-      def artifacts = 'devicehive-backend/target/devicehive-backend-*-boot.jar, devicehive-auth/target/devicehive-auth-*-boot.jar, devicehive-plugin/target/devicehive-plugin-*-boot.jar, devicehive-frontend/target/devicehive-frontend-*-boot.jar, devicehive-common/target/devicehive-common-*-shade.jar'
+      def artifacts = "${params.APP_NAME}/target/*.jar"
       archiveArtifacts artifacts: artifacts, fingerprint: true, onlyIfSuccessful: true
       stash includes: artifacts, name: 'jars'
     }
   }
 }
 
+/*
 stage('Build and publish Docker images in CI repository') {
   node('docker') {
     echo 'Building images ...'
