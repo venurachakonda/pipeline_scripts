@@ -51,23 +51,25 @@ stage('Build jars') {
         }
         finally {
           echo "surefire-reports here"
-          //junit '**/target/surefire-reports/TEST-*.xml'
+          junit '**/target/surefire-reports/TEST-*.xml'
         }
         def artifacts = "**/target/*.jar"
         archiveArtifacts artifacts: artifacts, fingerprint: true, onlyIfSuccessful: true
         stash includes: artifacts, name: 'jars'
       }
+      def appname = sh(script: 'basename $(ls target/*jar) ', returnStdout: true)
+      println appname
     }    
   }
 }
 
-/*
+
 stage('Build and publish Docker images to registry') {
   node() {
     echo 'Building images ...'
     dir("build"){
       unstash 'jars'
-      def appImage = docker.build("${params.APP_NAME} .")
+      def appImage = docker.build("${params.APP_NAME}", "--build-arg appname=${appname} .")
   
       echo 'Pushing images to registry ...'
       docker.withRegistry("http://${params.DOCKER_REGISTRY}", 'docker_registry'){
@@ -76,4 +78,4 @@ stage('Build and publish Docker images to registry') {
       }      
     }
   }
-}*/
+}
