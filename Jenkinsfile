@@ -2,7 +2,8 @@ properties([
   buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '', numToKeepStr: '5')), 
   parameters([
     string(defaultValue: 'sampleApp', description: 'Application Name', name: 'APP_NAME', trim: true),
-    string(defaultValue: 'git@github.com:venurachakonda/simple-java-maven-app.git', description: 'Application Source URL', name: 'APP_SCM_URL', trim: true), 
+    string(defaultValue: '192.168.33.50', description: 'Docker Registry Endpoint', name: 'DOCKER_REGISTRY', trim: true),    
+    string(defaultValue: 'git@github.com:venurachakonda/spring-petclinic.git', description: 'Application Source URL', name: 'APP_SCM_URL', trim: true), 
     string(defaultValue: 'git@github.com:venurachakonda/pipeline_scripts.git', description: 'Rackspace template files -  Docker dependencies', name: 'RPS_SCM_URL', trim: true)
   ])
 ])
@@ -44,13 +45,13 @@ stage('Build jars') {
       def maven = docker.image('maven:3.5.3-jdk-8')
       maven.pull()
       maven.inside {
-        sh 'mvn clean package -DskipTests'
+        sh 'mvn clean install'
         try {
           sh 'mvn test'
         }
         finally {
           echo "surefire-reports here"
-          junit '**/target/surefire-reports/TEST-*.xml'
+          //junit '**/target/surefire-reports/TEST-*.xml'
         }
         def artifacts = "**/target/*.jar"
         archiveArtifacts artifacts: artifacts, fingerprint: true, onlyIfSuccessful: true
@@ -61,23 +62,18 @@ stage('Build jars') {
 }
 
 /*
-stage('Build and publish Docker images in CI repository') {
-  node('docker') {
+stage('Build and publish Docker images to registry') {
+  node() {
     echo 'Building images ...'
-    unstash 'jars'
-    def auth = docker.build('devicehiveci/devicehive-auth:${BRANCH_NAME}', '--pull -f dockerfiles/devicehive-auth.Dockerfile .')
-    def plugin = docker.build('devicehiveci/devicehive-plugin:${BRANCH_NAME}', '-f dockerfiles/devicehive-plugin.Dockerfile .')
-    def frontend = docker.build('devicehiveci/devicehive-frontend:${BRANCH_NAME}', '-f dockerfiles/devicehive-frontend.Dockerfile .')
-    def backend = docker.build('devicehiveci/devicehive-backend:${BRANCH_NAME}', '-f dockerfiles/devicehive-backend.Dockerfile .')
-    def hazelcast = docker.build('devicehiveci/devicehive-hazelcast:${BRANCH_NAME}', '--pull -f dockerfiles/devicehive-hazelcast.Dockerfile .')
-
-    echo 'Pushing images to CI repository ...'
-    docker.withRegistry('https://registry.hub.docker.com', 'devicehiveci_dockerhub'){
-      auth.push()
-      plugin.push()
-      frontend.push()
-      backend.push()
-      hazelcast.push()
+    dir("build"){
+      unstash 'jars'
+      def appImage = docker.build("${params.APP_NAME} .")
+  
+      echo 'Pushing images to registry ...'
+      docker.withRegistry("http://${params.DOCKER_REGISTRY}", 'docker_registry'){
+        appImage.push("v${env.BUILD_NUMBER}")
+        appImage.push("latest")
+      }      
     }
   }
 }*/
