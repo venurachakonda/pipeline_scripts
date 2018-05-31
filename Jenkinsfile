@@ -2,7 +2,7 @@ properties([
   buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '', numToKeepStr: '5')), 
   parameters([
     string(defaultValue: 'sampleApp', description: 'Application Name', name: 'APP_NAME', trim: true),
-    string(defaultValue: '192.168.33.50', description: 'Docker Registry Endpoint', name: 'DOCKER_REGISTRY', trim: true),    
+    string(defaultValue: '192.168.33.50:80', description: 'Docker Registry Endpoint', name: 'DOCKER_REGISTRY', trim: true),    
     string(defaultValue: 'git@github.com:venurachakonda/spring-petclinic.git', description: 'Application Source URL', name: 'APP_SCM_URL', trim: true), 
     string(defaultValue: 'git@github.com:venurachakonda/pipeline_scripts.git', description: 'Rackspace template files -  Docker dependencies', name: 'RPS_SCM_URL', trim: true)
   ])
