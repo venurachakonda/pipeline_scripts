@@ -70,7 +70,7 @@ stage('Build and publish Docker images to registry') {
       unstash 'jars'
       def appname = sh(script: 'basename $(ls target/*jar) ', returnStdout: true)
       println appname      
-      def appImage = docker.build("${params.APP_NAME.toLowerCase()}", "--build-arg appname=${appname} .")
+      def appImage = docker.build("${params.APP_NAME.toLowerCase()}")
   
       echo 'Pushing images to registry ...'
       docker.withRegistry("http://${params.DOCKER_REGISTRY}", 'docker_registry'){

@@ -3,12 +3,12 @@ MAINTAINER Venu Rachakonda <venu.rachakonda@rackspace.com>
 
 WORKDIR /opt/demo/
 
-ARG appname
-ENV artifact ${appname}
-
-ADD ["./target/${artifact}","/opt/demo/webapps/"]
+ADD ["./target/spring-petclinic*jar","/opt/demo/webapps/"]
 VOLUME ["/opt/demo/","/opt/demo/"]
 
-EXPOSE 8081
 
-CMD ["java","-jar","/opt/demo/webapps/${artifact}","--server.port=8081"]
+COPY start.sh /sbin/start.sh
+RUN chmod 755 /sbin/start.sh
+
+EXPOSE 8081
+ENTRYPOINT ["/sbin/start.sh"]
