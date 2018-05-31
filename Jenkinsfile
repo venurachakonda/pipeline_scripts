@@ -9,8 +9,11 @@ properties([
 
 
 stage ('Clone Application Code') {
+  node{
      git branch: 'master', credentialsId: 'jenkins_ssh_key', url: params.APP_SCM_URL
-     stash includes: '**', name: params.APP_NAME
+     stash includes: '**', name: params.APP_NAME    
+  }
+
 }
 
 stage ('Clone Docker Dependencies') {
