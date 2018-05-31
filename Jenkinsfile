@@ -50,9 +50,9 @@ stage('Build jars') {
         }
         finally {
           echo "surefire-reports here"
-          //junit '**/target/surefire-reports/TEST-*.xml'
+          junit '**/target/surefire-reports/TEST-*.xml'
         }
-        def artifacts = "${params.APP_NAME}/target/*.jar"
+        def artifacts = "**/target/*.jar"
         archiveArtifacts artifacts: artifacts, fingerprint: true, onlyIfSuccessful: true
         stash includes: artifacts, name: 'jars'
       }
