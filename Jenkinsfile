@@ -14,75 +14,89 @@ node {
   deleteDir()  
 }
 
-
-stage ('Clone Application Code') {
-  node{
-     git branch: 'master', credentialsId: 'jenkins_ssh_key', url: params.APP_SCM_URL
-     stash includes: '**', name: params.APP_NAME    
-  }
-
-}
-
-stage ('Clone Docker Dependencies') {
-  node{
-    git branch: 'master', credentialsId: 'jenkins_ssh_key', url: params.RPS_SCM_URL
-    stash includes: '**', name: 'dockerConfig'
-  }
-}
-
-
-stage ('Setup Build Directory') {
-  node{
-    dir("build"){
-      unstash 'dockerConfig'
-      sh "mv docker/* ."
-    }
-    dir("build/${params.APP_NAME}"){
-      unstash params.APP_NAME
-    }             
-  }
-} 
-
-
-stage('Build jars') {
-  node{
-    echo 'Building jars ...'
-    dir("build/${params.APP_NAME}"){
-      def maven = docker.image('maven:3.5.3-jdk-8')
-      maven.pull()
-      maven.inside {
-        sh 'mvn clean install'
-        try {
-          echo "test"
-          sh 'mvn test'
+try {
+      stage ('Clone Application Code') {
+        node{
+           git branch: 'master', credentialsId: 'jenkins_ssh_key', url: params.APP_SCM_URL
+           stash includes: '**', name: params.APP_NAME    
         }
-        finally {
-          echo "surefire-reports here"
-          junit '**/target/surefire-reports/TEST-*.xml'
-        }
-        def artifacts = "**/target/*.jar"
-        archiveArtifacts artifacts: artifacts, fingerprint: true, onlyIfSuccessful: true
-        stash includes: artifacts, name: 'jars'
+      
       }
-    }    
-  }
+      
+      stage ('Clone Docker Dependencies') {
+        node{
+          git branch: 'master', credentialsId: 'jenkins_ssh_key', url: params.RPS_SCM_URL
+          stash includes: '**', name: 'dockerConfig'
+        }
+      }
+      
+      
+      stage ('Setup Build Directory') {
+        node{
+          dir("build"){
+            unstash 'dockerConfig'
+            sh "mv docker/* ."
+          }
+          dir("build/${params.APP_NAME}"){
+            unstash params.APP_NAME
+          }             
+        }
+      } 
+      
+      
+      stage('Build jars') {
+        node{
+          echo 'Building jars ...'
+          dir("build/${params.APP_NAME}"){
+            def maven = docker.image('maven:3.5.3-jdk-8')
+            maven.pull()
+            maven.inside {
+              sh 'mvn clean install'
+              try {
+                echo "test"
+                sh 'mvn test'
+              }
+              finally {
+                echo "surefire-reports here"
+                junit '**/target/surefire-reports/TEST-*.xml'
+              }
+              def artifacts = "**/target/*.jar"
+              archiveArtifacts artifacts: artifacts, fingerprint: true, onlyIfSuccessful: true
+              stash includes: artifacts, name: 'jars'
+            }
+          }    
+        }
+      }
+      
+      
+      stage('Build and publish Docker images to registry') {
+        node() {
+          echo 'Building images ...'
+          dir("build"){
+            unstash 'jars'
+            def appname = sh(script: 'basename $(ls target/*jar) ', returnStdout: true)
+            println appname      
+            def appImage = docker.build("${params.APP_NAME.toLowerCase()}")
+        
+            echo 'Pushing images to registry ...'
+            docker.withRegistry("http://${params.DOCKER_REGISTRY}", 'docker_registry'){
+              appImage.push("v${env.BUILD_NUMBER}")
+              appImage.push("latest")
+            }      
+          }
+        }
+      }
+
+      stage('Deploy QA') {
+        node() {
+          echo "invoking another build job"
+          build job: 'deploy1', parameters: [string(name: 'IMAGE', value: "${appImage}"), string(name: 'DEPLOY_ENV', value: 'TEST')], quietPeriod: 5
+        }
+      }  
+}
+catch (err) {
+        currentBuild.result = 'FAILED'
+        throw err 
 }
 
 
-stage('Build and publish Docker images to registry') {
-  node() {
-    echo 'Building images ...'
-    dir("build"){
-      unstash 'jars'
-      def appname = sh(script: 'basename $(ls target/*jar) ', returnStdout: true)
-      println appname      
-      def appImage = docker.build("${params.APP_NAME.toLowerCase()}")
-  
-      echo 'Pushing images to registry ...'
-      docker.withRegistry("http://${params.DOCKER_REGISTRY}", 'docker_registry'){
-        appImage.push("v${env.BUILD_NUMBER}")
-        appImage.push("latest")
-      }      
-    }
-  }
-}

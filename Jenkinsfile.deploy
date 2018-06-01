@@ -1,0 +1,25 @@
+#!groovy
+properties([
+	parameters([choice(choices: ['DEV', 'TEST', 'PROD'], description: 'Choose environment to deploy', name: 'DEPLOY_ENV'), 
+	string(defaultValue: '', description: 'Input Image version', name: 'IMAGE', trim: true)])
+])
+
+node {
+  // Clean workspace before doing anything
+  deleteDir()  
+}
+
+
+try {
+      stage ('Deploy to QA') {
+        node{
+           echo 'Deploying' 
+        }
+      }
+}
+catch (err) {
+        currentBuild.result = 'FAILED'
+        throw err 
+}
+
+
