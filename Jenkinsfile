@@ -54,11 +54,11 @@ try {
               sh 'mvn clean install'
               try {
                 echo "test"
-                sh 'mvn test'
+                //sh 'mvn test'
               }
               finally {
                 echo "surefire-reports here"
-                junit '**/target/surefire-reports/TEST-*.xml'
+                //junit '**/target/surefire-reports/TEST-*.xml'
               }
               def artifacts = "**/target/*.jar"
               archiveArtifacts artifacts: artifacts, fingerprint: true, onlyIfSuccessful: true
@@ -73,9 +73,7 @@ try {
         node() {
           echo 'Building images ...'
           dir("build"){
-            unstash 'jars'
-            def appname = sh(script: 'basename $(ls target/*jar) ', returnStdout: true)
-            println appname      
+            unstash 'jars'     
             def appImage = docker.build("${params.APP_NAME.toLowerCase()}")
         
             echo 'Pushing images to registry ...'
@@ -90,7 +88,7 @@ try {
       stage('Deploy QA') {
         node() {
           echo "invoking another build job"
-          build job: 'deploy1', parameters: [string(name: 'IMAGE', value: appImage ), string(name: 'DEPLOY_ENV', value: 'TEST')], quietPeriod: 5
+          build job: 'deploy1', parameters: [string(name: 'IMAGE', value: '192.168.x.x' ), string(name: 'DEPLOY_ENV', value: 'TEST')], quietPeriod: 5
         }
       }  
 }
