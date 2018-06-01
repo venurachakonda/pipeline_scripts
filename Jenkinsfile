@@ -9,6 +9,8 @@ properties([
   ])
 ])
 
+// Clean workspace before doing anything
+deleteDir()
 
 stage ('Clone Application Code') {
   node{
@@ -49,11 +51,11 @@ stage('Build jars') {
         sh 'mvn clean install'
         try {
           echo "test"
-          //sh 'mvn test'
+          sh 'mvn test'
         }
         finally {
           echo "surefire-reports here"
-          //junit '**/target/surefire-reports/TEST-*.xml'
+          junit '**/target/surefire-reports/TEST-*.xml'
         }
         def artifacts = "**/target/*.jar"
         archiveArtifacts artifacts: artifacts, fingerprint: true, onlyIfSuccessful: true

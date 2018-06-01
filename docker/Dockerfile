@@ -3,7 +3,7 @@ MAINTAINER Venu Rachakonda <venu.rachakonda@rackspace.com>
 
 WORKDIR /opt/demo/
 
-ADD ["./target/spring-petclinic*jar","/opt/demo/webapps/"]
+ADD ["./target/spring-boot-demo*jar","/opt/demo/webapps/"]
 VOLUME ["/opt/demo/","/opt/demo/"]
 
 
