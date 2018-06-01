@@ -86,6 +86,13 @@ try {
         }
       }
 
+
+      stage('QA approval') {
+        node() {
+          input "Does the staging environment look ok?"
+        }
+      }
+
       stage('Deploy QA') {
         node() {
           echo "invoking another build job"
