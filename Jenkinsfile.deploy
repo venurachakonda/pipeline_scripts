@@ -17,7 +17,7 @@ try {
            sh '''#!/bin/bash
                  echo "Deploying in kubernetes"
                  /usr/local/bin/kubectl delete pods sampleapp
-                 sleep 120
+                 sleep 90
                  /usr/local/bin/kubectl create -f /tmp/sample-reg-pod.yaml --kubeconfig=/var/lib/jenkins/.kube/config 
            '''
         }
