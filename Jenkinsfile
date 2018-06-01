@@ -9,8 +9,11 @@ properties([
   ])
 ])
 
-// Clean workspace before doing anything
-deleteDir()
+node {
+  // Clean workspace before doing anything
+  deleteDir()  
+}
+
 
 stage ('Clone Application Code') {
   node{
