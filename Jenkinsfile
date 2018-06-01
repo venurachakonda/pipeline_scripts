@@ -80,6 +80,7 @@ try {
             docker.withRegistry("http://${params.DOCKER_REGISTRY}", 'docker_registry'){
               appImage.push("v${env.BUILD_NUMBER}")
               appImage.push("latest")
+              println appImage
             }      
           }
         }
