@@ -1,6 +1,6 @@
 #!groovy
 properties([
-	parameters([choice(choices: ['DEV', 'TEST', 'PROD'], description: 'Choose environment to deploy', name: 'DEPLOY_ENV'), 
+	parameters([choice(choices: 'DEV\nTEST\nPROD', description: 'Choose environment to deploy', name: 'DEPLOY_ENV'), 
 	string(defaultValue: '', description: 'Input Image version', name: 'IMAGE', trim: true)])
 ])
 
