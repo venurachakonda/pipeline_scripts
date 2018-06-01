@@ -89,7 +89,7 @@ try {
       stage('Deploy QA') {
         node() {
           echo "invoking another build job"
-          build job: 'deploy1', parameters: [string(name: 'IMAGE', value: '192.168.x.x' ), string(name: 'DEPLOY_ENV', value: 'TEST')], quietPeriod: 5
+          build job: 'deploy1', parameters: [string(name: 'IMAGE', value: '192.168.33.50:80/sampleapp:latest' ), string(name: 'DEPLOY_ENV', value: 'TEST')], quietPeriod: 5
         }
       }  
 }

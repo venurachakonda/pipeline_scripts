@@ -13,7 +13,11 @@ node {
 try {
       stage ('Deploy to QA') {
         node{
-           echo 'Deploying' 
+           echo "Deploying to ${params.DEPLOY_ENV}  with Image ${params.IMAGE}" 
+           sh '''#!/bin/bash
+                 echo "Deploying in kubernetes"
+                 kubectl create -f /tmp/sample-reg-pod.yaml --kubeconfig=/var/lib/jenkins/.kube/config 
+           '''
         }
       }
 }
