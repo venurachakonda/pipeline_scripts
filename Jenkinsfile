@@ -54,11 +54,11 @@ try {
               sh 'mvn clean install'
               try {
                 echo "test"
-                //sh 'mvn test'
+                sh 'mvn test'
               }
               finally {
                 echo "surefire-reports here"
-                //junit '**/target/surefire-reports/TEST-*.xml'
+                junit '**/target/surefire-reports/TEST-*.xml'
               }
               def artifacts = "**/target/*.jar"
               archiveArtifacts artifacts: artifacts, fingerprint: true, onlyIfSuccessful: true
